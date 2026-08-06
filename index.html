@@ -277,7 +277,7 @@
         <div id="section-1" class="text-center glass-panel p-8">
             <div>
                 <div class="w-40 h-40 mx-auto mb-4">
-                    <img src="https://img5.pic.in.th/file/secure-sv1/3a9e7a7733684abeb7baa751b20a4a63.png" alt="The Tense Logo" class="w-full h-full object-contain">
+                    <img src="https://lh3.googleusercontent.com/d/1J5cYjd1UhmJ5dWEJZHpuDTOCxd8UVNy4" alt="The Tense Logo" class="w-full h-full object-contain">
                 </div>
                 <h1 class="text-4xl md:text-5xl font-orbitron text-cyan-400 mb-2 tracking-widest text-glitch">The Tense</h1>
                 <p class="text-xl md:text-2xl font-bold text-gray-300 mb-8">The Wordkeepers: AGENT RECRUITMENT PROTOCOL</p>
@@ -491,6 +491,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- STATE MANAGEMENT ---
+            const LEADERBOARD_API_URL = 'https://script.google.com/macros/s/AKfycbz5uXRkD3cmi_63gPeKqfU0nkx7u7UybPsiDU7mhti-ReLYXilZBAyo2JzlLuWz-wKG/exec';
             let currentSection = 'section-1';
             let userData = { name: '', class: '', number: '' };
             let preTestScore = 0;
@@ -948,7 +949,11 @@
 
             function renderGame1Question() {
                 if (currentQuestionIndex >= currentShuffledGame1Questions.length) {
-                    defuseSuccess();
+                    if (game1Score >= 10) {
+                        defuseSuccess();
+                    } else {
+                        bombDetonated();
+                    }
                     return;
                 }
                 const q = currentShuffledGame1Questions[currentQuestionIndex];
@@ -1081,6 +1086,7 @@
             }
             
             function handleGame2Answer() {
+                if (submitDataBtn.disabled) return;
                 const userAnswer = game2AnswerInput.value.trim().toLowerCase();
                 const correctAnswer = currentShuffledGame2Questions[currentQuestionIndex].a.toLowerCase();
                 
@@ -1232,10 +1238,8 @@
             }
 
             // --- Section 6: Leaderboard Logic ---
-            function showLeaderboard() {
+            function saveLeaderboardLocally(finalScore) {
                 const leaderboard = JSON.parse(localStorage.getItem('wordkeepersLeaderboard')) || [];
-                const finalScore = postTestScore;
-                
                 const existingUserIndex = leaderboard.findIndex(entry => entry.number === userData.number && entry.class === userData.class);
                 if (existingUserIndex > -1) {
                     if (finalScore > leaderboard[existingUserIndex].score) {
@@ -1244,27 +1248,52 @@
                 } else {
                     leaderboard.push({ ...userData, score: finalScore });
                 }
-
                 leaderboard.sort((a, b) => b.score - a.score);
                 localStorage.setItem('wordkeepersLeaderboard', JSON.stringify(leaderboard));
+                return leaderboard;
+            }
 
+            function renderLeaderboard(list) {
                 leaderboardBody.innerHTML = '';
-                leaderboard.forEach((entry, index) => {
+                list.forEach((entry, index) => {
+                    const isCurrentUser = String(entry.number) === String(userData.number) && String(entry.class) === String(userData.class);
                     const row = document.createElement('tr');
                     row.classList.add('border-b', 'border-gray-700');
-                    if (entry.number === userData.number && entry.class === userData.class) {
+                    if (isCurrentUser) {
                         row.classList.add('bg-cyan-900', 'bg-opacity-50');
                     }
-                    row.innerHTML = `
-                        <td class="p-3">${index + 1}</td>
-                        <td class="p-3">${entry.name} ${entry.number === userData.number && entry.class === userData.class ? '🌟' : ''}</td>
-                        <td class="p-3">${entry.class}</td>
-                        <td class="p-3">${entry.number}</td>
-                        <td class="p-3 font-bold text-cyan-400">${entry.score}/${postTestQuestions.length}</td>
-                    `;
+
+                    const cells = [index + 1, `${entry.name}${isCurrentUser ? ' 🌟' : ''}`, entry.class, entry.number, `${entry.score}/${postTestQuestions.length}`];
+                    cells.forEach((value, i) => {
+                        const td = document.createElement('td');
+                        td.classList.add('p-3');
+                        if (i === 4) td.classList.add('font-bold', 'text-cyan-400');
+                        td.textContent = value;
+                        row.appendChild(td);
+                    });
                     leaderboardBody.appendChild(row);
                 });
+            }
 
+            async function showLeaderboard() {
+                const finalScore = postTestScore;
+                const localLeaderboard = saveLeaderboardLocally(finalScore);
+
+                let remoteLeaderboard = null;
+                try {
+                    await fetch(LEADERBOARD_API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ name: userData.name, class: userData.class, number: userData.number, score: finalScore })
+                    });
+                    const res = await fetch(LEADERBOARD_API_URL);
+                    const remoteData = await res.json();
+                    remoteLeaderboard = remoteData.sort((a, b) => b.score - a.score);
+                } catch (err) {
+                    console.error('Leaderboard sync with Google Sheet failed, showing local scores instead.', err);
+                }
+
+                renderLeaderboard(remoteLeaderboard || localLeaderboard);
                 showSection('section-6');
             }
             
