@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Tense</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom Styles for the Spy Theme */
+        html, body {
+            height: 100%;
+        }
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            color: #E0E0E0;
+            background-color: #0a0f1f;
+            overflow-y: auto; /* Allow vertical scrolling */
+        }
+
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Animated background */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: #0a0f1f;
+            overflow: hidden;
+        }
+        .background-animation::before, .background-animation::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .background-animation::before {
+             background: linear-gradient(to bottom, rgba(10, 15, 31, 0.8), rgba(10, 15, 31, 1));
+        }
+        /* Scanlines Effect */
+        .background-animation::after {
+            background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            animation: scanlines 5s linear infinite;
+        }
+        @keyframes scanlines {
+            from { background-position: 0 0; }
+            to { background-position: 0 100px; }
+        }
+
+        .matrix-text {
+            position: absolute;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ffcc;
+            font-size: 14px;
+            white-space: nowrap;
+            opacity: 0;
+            animation: matrix-fall 15s linear infinite;
+            text-shadow: 0 0 5px #00ffcc;
+        }
+
+        @keyframes matrix-fall {
+            0% { transform: translateY(-100px); opacity: 0; }
+            10% { opacity: 0.7; }
+            90% { opacity: 0.7; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        /* Blinking cursor effect */
+        .blinking-cursor {
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            from, to { color: transparent; }
+            50% { color: inherit; }
+        }
+
+        /* Glitch effect on hover */
+        .btn-glitch:hover {
+            animation: glitch-button 0.3s linear;
+        }
+
+        @keyframes glitch-button {
+            0%, 100% { transform: none; }
+            25% { transform: skew(-0.5deg, -0.5deg); }
+            50% { transform: none; }
+            75% { transform: skew(0.5deg, 0.5deg); }
+        }
+
+        /* Text Glitch Effect */
+        .text-glitch {
+            animation: glitch-text 3s linear infinite;
+        }
+        @keyframes glitch-text {
+            0% { text-shadow: 1px 0 0 red, -1px 0 0 cyan; }
+            2% { text-shadow: none; }
+            4% { text-shadow: 1px 0 0 red, -1px 0 0 cyan; }
+            6% { text-shadow: none; }
+            8% { text-shadow: 1px 0 0 red, -1px 0 0 cyan; }
+            98% { text-shadow: 1px 0 0 red, -1px 0 0 cyan; }
+            100% { text-shadow: none; }
+        }
+
+
+        /* Custom button style */
+        .btn-primary {
+            @apply font-orbitron bg-cyan-500 text-gray-900 font-bold py-3 px-6 rounded-md uppercase tracking-widest transition-all duration-300;
+            border: 2px solid #00ffcc;
+            box-shadow: 0 0 10px #00ffcc, inset 0 0 5px rgba(0, 255, 204, 0.5);
+        }
+        .btn-primary:hover {
+            @apply bg-cyan-400;
+            box-shadow: 0 0 20px #00ffcc, inset 0 0 10px rgba(0, 255, 204, 0.7);
+        }
+        .btn-primary:disabled {
+            @apply bg-gray-600 border-gray-500 text-gray-400 cursor-not-allowed;
+            box-shadow: none;
+        }
+        
+        /* Modal Style */
+        .modal {
+            @apply fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300;
+        }
+        .modal-content {
+            @apply bg-gray-900 border-2 border-cyan-500 rounded-lg shadow-2xl p-8 max-w-lg w-full;
+            box-shadow: 0 0 25px rgba(0, 255, 204, 0.4);
+        }
+        
+        /* Glassmorphism effect for panels */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 204, 0.2);
+            border-radius: 0.5rem;
+            position: relative;
+        }
+        /* Corner Brackets Decoration */
+        .glass-panel::before, .glass-panel::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-color: #00ffcc;
+            border-style: solid;
+        }
+        .glass-panel::before { top: -5px; left: -5px; border-width: 2px 0 0 2px; }
+        .glass-panel::after { top: -5px; right: -5px; border-width: 2px 2px 0 0; }
+        .glass-panel > div::before, .glass-panel > div::after {
+             content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-color: #00ffcc;
+            border-style: solid;
+        }
+        .glass-panel > div::before { bottom: -5px; left: -5px; border-width: 0 0 2px 2px; }
+        .glass-panel > div::after { bottom: -5px; right: -5px; border-width: 0 2px 2px 0; }
+        
+        
+        /* Progress Bar */
+        .progress-bar-container {
+            @apply w-full bg-gray-700 rounded-full h-4 border-2 border-cyan-800;
+        }
+        .progress-bar {
+            @apply bg-cyan-400 h-full rounded-full transition-all duration-500;
+            box-shadow: 0 0 8px #00ffcc;
+        }
+        
+        /* Retina Scan Animation */
+        .retina-scan {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 15, 31, 0.9);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .scan-line {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #00ffcc;
+            box-shadow: 0 0 15px #00ffcc;
+            animation: scan 2s ease-in-out;
+        }
+        @keyframes scan {
+            from { top: 0; }
+            to { top: 100%; }
+        }
+        
+        /* Countdown Timer Style */
+        .countdown-timer {
+            @apply font-orbitron text-5xl text-red-500;
+            text-shadow: 0 0 10px red;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        /* Screen Flash on Error */
+        .screen-flash-red {
+            animation: flash-red 0.5s ease-out;
+        }
+        @keyframes flash-red {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(255, 0, 0, 0.3); }
+        }
+
+        /* Explosion Effect */
+        .explosion-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 200;
+            background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,200,0,1) 20%, rgba(255,100,0,0) 70%);
+            animation: explosion 0.5s ease-out forwards;
+            transform: scale(0);
+        }
+        @keyframes explosion {
+            from { transform: scale(0); opacity: 1; }
+            to { transform: scale(2); opacity: 0; }
+        }
+
+        /* Hacked Effect */
+        .hacked-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 200;
+            overflow: hidden;
+            background: rgba(0,0,0,0.8);
+        }
+        .hacked-text {
+            position: absolute;
+            font-family: 'Courier New', monospace;
+            color: red;
+            font-size: 16px;
+            animation: matrix-fall 2s linear;
+        }
+
+    </style>
+</head>
+<body class="flex items-center justify-center py-8">
+    <div class="background-animation" id="background-animation"></div>
+    <div id="screen-flash-overlay" class="fixed inset-0 z-50 pointer-events-none"></div>
+    <div id="explosion-effect" class="explosion-overlay hidden"></div>
+    <div id="hacked-effect" class="hacked-overlay hidden"></div>
+
+
+    <main class="relative z-10 w-full max-w-5xl mx-auto p-4">
+
+        <!-- Section 1: Agent Registration -->
+        <div id="section-1" class="text-center glass-panel p-8">
+            <div>
+                <div class="w-40 h-40 mx-auto mb-4">
+                    <img src="https://lh3.googleusercontent.com/d/1J5cYjd1UhmJ5dWEJZHpuDTOCxd8UVNy4" alt="The Tense Logo" class="w-full h-full object-contain">
+                </div>
+                <h1 class="text-4xl md:text-5xl font-orbitron text-cyan-400 mb-2 tracking-widest text-glitch">The Tense</h1>
+                <p class="text-xl md:text-2xl font-bold text-gray-300 mb-8">The Wordkeepers: AGENT RECRUITMENT PROTOCOL</p>
+                <button id="initiate-assessment-btn" class="btn-primary btn-glitch text-2xl">
+                    INITIATE ASSESSMENT <span class="blinking-cursor">█</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Registration Modal -->
+        <div id="registration-modal" class="modal hidden opacity-0">
+            <div class="modal-content glass-panel">
+                <div>
+                    <h2 class="text-2xl font-orbitron text-cyan-400 mb-6 text-center">CREATE YOUR PROFILE 📝</h2>
+                    <form id="registration-form">
+                        <div class="mb-4">
+                            <label for="student-name" class="block mb-1 text-cyan-300">ชื่อ</label>
+                            <input type="text" id="student-name" class="w-full bg-gray-800 border-2 border-cyan-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-cyan-400 text-white" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="student-class" class="block mb-1 text-cyan-300">ชั้น</label>
+                            <input type="text" id="student-class" class="w-full bg-gray-800 border-2 border-cyan-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-cyan-400 text-white" required>
+                        </div>
+                        <div class="mb-6">
+                            <label for="student-number" class="block mb-1 text-cyan-300">เลขที่</label>
+                            <input type="text" id="student-number" class="w-full bg-gray-800 border-2 border-cyan-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-cyan-400 text-white" required>
+                        </div>
+                        <button id="go-operational-btn" type="submit" class="w-full btn-primary" disabled>
+                            GO OPERATIONAL
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Retina Scan Animation -->
+        <div id="retina-scan-animation" class="retina-scan hidden">
+            <div class="scan-line"></div>
+            <p class="text-2xl font-orbitron text-cyan-400 z-10">IDENTITY CONFIRMED... ACCESS GRANTED</p>
+        </div>
+
+
+        <!-- Section 2: Aptitude Assessment (Pre-Test) -->
+        <div id="section-2" class="hidden glass-panel p-8">
+            <div>
+                <h2 class="text-3xl font-orbitron text-cyan-400 mb-2 text-center text-glitch">AGENT APTITUDE ASSESSMENT</h2>
+                <p class="text-lg text-gray-300 mb-6 text-center">PROTOCOL-01</p>
+                <div class="mb-4">
+                    <div id="progress-text" class="text-center text-cyan-300 mb-2">Analyzing Cognitive Response... (1/10)</div>
+                    <div class="progress-bar-container">
+                        <div id="progress-bar-2" class="progress-bar" style="width: 10%;"></div>
+                    </div>
+                </div>
+                <div id="pre-test-question-container">
+                    <p id="pre-test-question" class="text-xl mb-6 text-center"></p>
+                    <div id="pre-test-options" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+                <div id="pre-test-feedback" class="hidden text-center mt-6">
+                    <p class="text-2xl font-bold text-cyan-400">Assessment Complete.</p>
+                    <p class="text-lg text-gray-300">You show potential, Recruit. Stand by for your first briefing. 司令官</p>
+                    <button id="awaiting-briefing-btn" class="btn-primary mt-6">AWAITING BRIEFING...</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Commander's Briefing (Lesson) -->
+        <div id="section-3" class="hidden glass-panel p-8 text-center">
+            <div>
+                <h2 class="text-3xl font-orbitron text-cyan-400 mb-2 text-glitch">INCOMING PRESENT SIMPLE</h2>
+                <p class="text-lg text-red-500 font-bold mb-4">COMMANDER SMART</p>
+                <div class="w-full max-w-4xl mx-auto aspect-video bg-black border-2 border-cyan-600 rounded-md mb-4">
+                     <div id="player"></div>
+                </div>
+                <p class="text-lg text-cyan-300 mb-6">ตั้งใจดูวิดีโอการรับคำสั่งให้จบ เพื่อปลดล็อกไปยังภารกิจ! 💡</p>
+                <button id="accept-mission-btn" class="btn-primary text-xl" disabled>ปลดล็อกใน <span id="mission-timer">15</span>s</button>
+            </div>
+        </div>
+
+        <!-- Section 4 Instructions (Game 1) -->
+        <div id="section-4-instructions" class="hidden glass-panel p-8 text-center">
+            <div>
+                <h2 class="text-3xl font-orbitron text-red-600 mb-2 text-glitch">MISSION BRIEFING</h2>
+                <h3 class="text-xl font-bold text-gray-300 mb-6">OPERATION: BOMB DEFUSAL</h3>
+                <div class="text-left max-w-md mx-auto space-y-4 text-lg">
+                    <p><span class="text-cyan-400 font-bold">OBJECTIVE:</span> กู้ระเบิดให้ได้ 10 ลูก</p>
+                    <p><span class="text-cyan-400 font-bold">TIME LIMIT:</span> 2 นาที (120 วินาที)</p>
+                    <p><span class="text-red-500 font-bold">WARNING:</span> การตอบผิดจะทำให้เวลาลดลงอย่างรวดเร็ว!</p>
+                </div>
+                <button id="start-game1-btn" class="btn-primary mt-8">START MISSION</button>
+            </div>
+        </div>
+
+        <!-- Section 4: Bomb Defusal Game -->
+        <div id="section-4" class="hidden glass-panel p-8">
+            <div>
+                <h2 class="text-3xl font-orbitron text-red-600 mb-2 text-center text-glitch">! ! ! WARNING: LOGIC BOMB DETECTED ! ! !</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <p id="game-score-text" class="text-xl font-bold text-cyan-400">Components Defused: 0/10</p>
+                    <div id="countdown-timer" class="countdown-timer">02:00</div>
+                </div>
+                <div id="game-container" class="bg-gray-800 border-2 border-red-500 p-6 rounded-md text-center">
+                    <p class="text-lg text-gray-400 mb-2">DEFUSAL TERMINAL</p>
+                    <p id="game-question" class="text-xl text-white mb-6 min-h-[56px] flex items-center justify-center"></p>
+                    <div id="game-options" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Game options will be inserted here -->
+                    </div>
+                </div>
+                <div id="game-result-container" class="hidden text-center mt-6">
+                    <p id="game-result-message" class="text-4xl font-orbitron mb-4"></p>
+                    <button id="game-next-step-btn" class="btn-primary text-xl"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4b Instructions (Game 2) -->
+        <div id="section-4b-instructions" class="hidden glass-panel p-8 text-center">
+            <div>
+                 <h2 class="text-3xl font-orbitron text-yellow-400 mb-2 text-glitch">NEW OBJECTIVE</h2>
+                 <h3 class="text-xl font-bold text-gray-300 mb-6">OPERATION: DATA EXTRACTION</h3>
+                 <div class="text-left max-w-md mx-auto space-y-4 text-lg">
+                     <p><span class="text-cyan-400 font-bold">OBJECTIVE:</span> จงเติม s หรือ es ในคำในวงเล็บให้ถูกต้อง เพื่อขโมยข้อมูล 5 ชุด</p>
+                     <p><span class="text-cyan-400 font-bold">TIME LIMIT:</span> 1 นาที 30 วินาที (90 วินาที)</p>
+                     <p><span class="text-yellow-500 font-bold">SYSTEM ALERT:</span> การตอบผิดจะทำให้เสียเวลา! แต่การตอบถูกจะช่วยเพิ่มเวลาให้เล็กน้อย</p>
+                 </div>
+                 <button id="start-game2-btn" class="btn-primary bg-yellow-500 border-yellow-400 hover:bg-yellow-400 mt-8">BEGIN INFILTRATION</button>
+            </div>
+        </div>
+
+        <!-- Section 4b: Data Extraction Game -->
+        <div id="section-4b" class="hidden glass-panel p-8">
+            <div>
+                <h2 class="text-3xl font-orbitron text-yellow-400 mb-2 text-center text-glitch">! ! ! INFILTRATION IN PROGRESS ! ! !</h2>
+                <div class="flex justify-between items-center mb-4">
+                     <p id="game2-score-text" class="text-xl font-bold text-cyan-400">Data Extracted: 0/5</p>
+                     <div id="game2-countdown-timer" class="countdown-timer text-yellow-400">01:30</div>
+                </div>
+                <div id="game2-container" class="bg-gray-800 border-2 border-yellow-500 p-6 rounded-md text-center">
+                    <p class="text-lg text-gray-400 mb-2 font-mono">> DECRYPTING DATA STREAM...</p>
+                    <p id="game2-question" class="text-xl text-white mb-4 font-mono"></p>
+                    <div class="flex items-center justify-center gap-2">
+                        <span id="game2-prompt-start" class="text-xl text-white font-mono"></span>
+                        <input type="text" id="game2-answer-input" class="bg-gray-900 border-b-2 border-yellow-400 p-2 text-xl text-center text-yellow-300 w-48 focus:outline-none font-mono">
+                        <span id="game2-prompt-end" class="text-xl text-white font-mono"></span>
+                    </div>
+                    <button id="submit-data-btn" class="btn-primary bg-yellow-500 border-yellow-400 hover:bg-yellow-400 mt-6">EXTRACT DATA</button>
+                    <p id="game2-feedback-text" class="mt-4 h-6 text-lg font-mono"></p>
+                </div>
+                <div id="game2-result-container" class="hidden text-center mt-6">
+                    <p id="game2-result-message" class="text-4xl font-orbitron mb-4"></p>
+                    <button id="game2-next-step-btn" class="btn-primary text-xl"></button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Section 5: Final Debriefing (Post-Test) -->
+        <div id="section-5" class="hidden glass-panel p-8">
+            <div>
+                <h2 class="text-3xl font-orbitron text-cyan-400 mb-2 text-center text-glitch">FINAL DEBRIEFING</h2>
+                <p class="text-lg text-gray-300 mb-6 text-center">SUBMIT YOUR REPORT ✨</p>
+                <div class="mb-4">
+                    <div id="post-test-progress-text" class="text-center text-cyan-300 mb-2">Compiling Report... (1/10)</div>
+                    <div class="progress-bar-container">
+                        <div id="progress-bar-5" class="progress-bar" style="width: 10%;"></div>
+                    </div>
+                </div>
+                <div id="post-test-question-container">
+                    <p id="post-test-question" class="text-xl mb-6 text-center"></p>
+                    <div id="post-test-options" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+                <div id="post-test-feedback" class="hidden text-center mt-6">
+                     <p class="text-2xl font-bold text-cyan-400">Report submitted. Calculating mission success rate...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 6: Leaderboard & Conclusion -->
+        <div id="section-6" class="hidden glass-panel p-8">
+            <div>
+                <h2 class="text-4xl font-orbitron text-cyan-400 mb-6 text-center text-glitch">LEADERBOARD 👑</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b-2 border-cyan-700">
+                                <th class="p-3 text-lg text-cyan-300">Rank 🏆</th>
+                                <th class="p-3 text-lg text-cyan-300">ชื่อ</th>
+                                <th class="p-3 text-lg text-cyan-300">ชั้น</th>
+                                <th class="p-3 text-lg text-cyan-300">เลขที่</th>
+                                <th class="p-3 text-lg text-cyan-300">Mission Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body">
+                            <!-- Leaderboard rows will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-center text-lg text-gray-300 mt-8">Congratulations, Agent. Your performance has been noted. Keep honing your skills. The world is always watching. 👍</p>
+                <div class="flex justify-center gap-4 mt-8">
+                    <button id="restart-protocol-btn" class="btn-primary">RESTART PROTOCOL</button>
+                    <button id="go-dark-btn" class="btn-primary bg-red-600 border-red-500 hover:bg-red-500">GO DARK</button>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="absolute -bottom-12 left-0 right-0 text-center text-gray-500 text-sm">
+            พัฒนาโดยครูตรึงตระกานต์ ทองมา โรงเรียนบ้านหัวถนน ปีการศึกษา 2568
+        </footer>
+    </main>
+    
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- STATE MANAGEMENT ---
+            const LEADERBOARD_API_URL = 'https://script.google.com/macros/s/AKfycbz5uXRkD3cmi_63gPeKqfU0nkx7u7UybPsiDU7mhti-ReLYXilZBAyo2JzlLuWz-wKG/exec';
+            let currentSection = 'section-1';
+            let userData = { name: '', class: '', number: '' };
+            let preTestScore = 0;
+            let game1Score = 0;
+            let game2Score = 0;
+            let postTestScore = 0;
+            let currentQuestionIndex = 0;
+            let game1CountdownInterval;
+            let game1TimeLeft = 120; // 2 minutes for the bomb
+            let game2CountdownInterval;
+            let game2TimeLeft = 90; // 1.5 minutes for data extraction
+            let currentShuffledGame1Questions = [];
+            let currentShuffledGame2Questions = [];
+            let player; // YouTube Player
+
+
+            // --- DOM ELEMENTS ---
+            const sections = document.querySelectorAll('main > div[id^="section-"]');
+            const background = document.getElementById('background-animation');
+            const screenFlashOverlay = document.getElementById('screen-flash-overlay');
+            const explosionEffect = document.getElementById('explosion-effect');
+            const hackedEffect = document.getElementById('hacked-effect');
+            
+            // Section 1
+            const initiateBtn = document.getElementById('initiate-assessment-btn');
+            const regModal = document.getElementById('registration-modal');
+            const regForm = document.getElementById('registration-form');
+            const goOperationalBtn = document.getElementById('go-operational-btn');
+            const regInputs = regForm.querySelectorAll('input');
+            const retinaScan = document.getElementById('retina-scan-animation');
+
+            // Section 2
+            const preTestContainer = document.getElementById('section-2');
+            const preTestQuestionEl = document.getElementById('pre-test-question');
+            const preTestOptionsEl = document.getElementById('pre-test-options');
+            const preTestFeedbackEl = document.getElementById('pre-test-feedback');
+            const progressText2 = document.getElementById('progress-text');
+            const progressBar2 = document.getElementById('progress-bar-2');
+            const awaitingBriefingBtn = document.getElementById('awaiting-briefing-btn');
+
+            // Section 3
+            const acceptMissionBtn = document.getElementById('accept-mission-btn');
+            const missionTimerEl = document.getElementById('mission-timer');
+
+            // Section 4 (Game 1)
+            const startGame1Btn = document.getElementById('start-game1-btn');
+            const gameContainer = document.getElementById('game-container');
+            const gameScoreText = document.getElementById('game-score-text');
+            const countdownTimerEl = document.getElementById('countdown-timer');
+            const gameQuestionEl = document.getElementById('game-question');
+            const gameOptionsEl = document.getElementById('game-options');
+            const gameResultContainer = document.getElementById('game-result-container');
+            const gameResultMessage = document.getElementById('game-result-message');
+            const gameNextStepBtn = document.getElementById('game-next-step-btn');
+
+            // Section 4b (Game 2)
+            const startGame2Btn = document.getElementById('start-game2-btn');
+            const game2ScoreText = document.getElementById('game2-score-text');
+            const game2CountdownTimerEl = document.getElementById('game2-countdown-timer');
+            const game2Container = document.getElementById('game2-container');
+            const game2QuestionEl = document.getElementById('game2-question');
+            const game2AnswerInput = document.getElementById('game2-answer-input');
+            const submitDataBtn = document.getElementById('submit-data-btn');
+            const game2FeedbackText = document.getElementById('game2-feedback-text');
+            const game2ResultContainer = document.getElementById('game2-result-container');
+            const game2ResultMessage = document.getElementById('game2-result-message');
+            const game2NextStepBtn = document.getElementById('game2-next-step-btn');
+
+
+            // Section 5
+            const postTestContainer = document.getElementById('section-5');
+            const postTestQuestionEl = document.getElementById('post-test-question');
+            const postTestOptionsEl = document.getElementById('post-test-options');
+            const postTestFeedbackEl = document.getElementById('post-test-feedback');
+            const progressText5 = document.getElementById('post-test-progress-text');
+            const progressBar5 = document.getElementById('progress-bar-5');
+
+            // Section 6
+            const leaderboardBody = document.getElementById('leaderboard-body');
+            const restartProtocolBtn = document.getElementById('restart-protocol-btn');
+            const goDarkBtn = document.getElementById('go-dark-btn');
+
+
+            // --- SOUND EFFECTS ---
+            const sounds = {
+                click: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 0.1 } }).toDestination(),
+                correct: new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.005, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination(),
+                incorrect: new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.1 } }).toDestination(),
+                missionStart: new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'sawtooth' } }).toDestination(),
+                explosion: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.005, decay: 0.5, sustain: 0.1, release: 0.5 } }).toDestination(),
+                hacked: new Tone.Synth({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.1 } }).toDestination(),
+                victory: new Tone.PolySynth(Tone.Synth).toDestination()
+            };
+            
+            const musicLoops = {
+                menu: new Tone.Loop(time => {
+                    sounds.click.triggerAttackRelease("C3", "8n", time);
+                }, "4n"),
+                test: new Tone.Loop(time => {
+                    sounds.click.triggerAttackRelease("E4", "8n", time);
+                }, "2n"),
+                briefing: new Tone.Loop(time => {
+                    sounds.click.triggerAttackRelease("G2", "1n", time);
+                }, "1n"),
+                action: new Tone.Pattern((time, note) => {
+                    sounds.click.triggerAttackRelease(note, 0.1, time);
+                }, ["C4", "E4", "G4", "B4"], "up")
+            };
+            
+            function playClick() { sounds.click.triggerAttackRelease("C5", "8n"); }
+            function playCorrect() { sounds.correct.triggerAttackRelease("G5", "8n"); }
+            function playIncorrect() { sounds.incorrect.triggerAttackRelease("C3", "4n"); }
+            function playMissionStart() { sounds.missionStart.triggerAttackRelease(["C4", "E4", "G4"], "1n"); }
+            function playExplosion() { sounds.explosion.triggerAttackRelease("1n"); }
+            function playHacked() {
+                const now = Tone.now();
+                sounds.hacked.triggerAttackRelease("C2", "16n", now);
+                sounds.hacked.triggerAttackRelease("G4", "16n", now + 0.05);
+                sounds.hacked.triggerAttackRelease("E3", "16n", now + 0.1);
+            }
+            
+            function stopAllMusic() {
+                Object.values(musicLoops).forEach(loop => {
+                    if (loop.state === 'started') loop.stop(0);
+                });
+                if (Tone.Transport.state === 'started') {
+                    Tone.Transport.cancel(0);
+                    Tone.Transport.stop();
+                }
+            }
+
+            function playBackgroundMusic(section) {
+                stopAllMusic();
+                let shouldStartTransport = true;
+                Tone.Transport.bpm.value = 120;
+                switch(section) {
+                    case 'section-1':
+                        Tone.Transport.bpm.value = 80;
+                        musicLoops.menu.start(0);
+                        break;
+                    case 'section-2':
+                    case 'section-5':
+                        Tone.Transport.bpm.value = 100;
+                        musicLoops.test.start(0);
+                        break;
+                    case 'section-3':
+                        shouldStartTransport = false;
+                        break;
+                    case 'section-4':
+                    case 'section-4b':
+                        Tone.Transport.bpm.value = 140;
+                        musicLoops.action.start(0);
+                        break;
+                    case 'section-6':
+                        sounds.victory.triggerAttackRelease(["C4", "E4", "G4", "C5"], "1n");
+                        shouldStartTransport = false;
+                        break;
+                }
+                if (shouldStartTransport && Tone.Transport.state !== 'started') {
+                    Tone.Transport.start();
+                }
+            }
+
+
+            // --- DATA ---
+            const preTestQuestions = [
+                { q: "I normally ___ to school by bus.", o: ["go", "goes", "am going", "goed"], a: 0 },
+                { q: "She ___ like coffee.", o: ["don't", "doesn't", "isn't", "not"], a: 1 },
+                { q: "They ___ football every weekend.", o: ["plays", "are playing", "play", "played"], a: 2 },
+                { q: "The sun ___ in the east.", o: ["rise", "is rising", "rises", "rose"], a: 2 },
+                { q: "My cat ___ on my bed every night.", o: ["sleep", "sleeps", "is sleeping", "slept"], a: 1 },
+                { q: "___ you speak English?", o: ["Do", "Does", "Are", "Is"], a: 0 },
+                { q: "He ___ a doctor.", o: ["am", "are", "is", "be"], a: 2 },
+                { q: "We ___ watch TV in the morning.", o: ["doesn't", "aren't", "don't", "not"], a: 2 },
+                { q: "What time ___ the train leave?", o: ["do", "is", "does", "are"], a: 2 },
+                { q: "Water ___ at 100 degrees Celsius.", o: ["boil", "boils", "is boiling", "boiled"], a: 1 }
+            ];
+
+            const game1Questions = [
+                { q: "My brother ___ hard for his exams.", o: ["study", "studies", "is studying", "studying"], a: 1 },
+                { q: "A cat ___ mice.", o: ["catch", "catches", "is catching", "caught"], a: 1 },
+                { q: "She never ___ breakfast.", o: ["eat", "is eating", "eats", "ate"], a: 2 },
+                { q: "He ___ to the gym after work.", o: ["goes", "go", "is going", "went"], a: 0 },
+                { q: "My friend ___ cars.", o: ["fix", "is fixing", "fixes", "fixed"], a: 2 },
+                { q: "The baby ___ when it is hungry.", o: ["cry", "cries", "is crying", "cried"], a: 1 },
+                { q: "She always ___ her hands before meals.", o: ["wash", "washes", "is washing", "washed"], a: 1 },
+                { q: "My teacher ___ a lot of questions.", o: ["ask", "is asking", "asks", "asked"], a: 2 },
+                { q: "He ___ the piano.", o: ["not play", "don't play", "doesn't play", "isn't playing"], a: 2 },
+                { q: "What time ___ you finish work?", o: ["do", "does", "are", "is"], a: 0 },
+                { q: "Water ___ at 0 degrees Celsius.", o: ["freeze", "freezes", "is freezing", "froze"], a: 1 },
+                { q: "My parents ___ in a big city.", o: ["live", "lives", "are living", "lived"], a: 0 },
+                { q: "The train ___ at 7 AM every morning.", o: ["leave", "is leaving", "leaves", "left"], a: 2 },
+                { q: "He ___ his teeth twice a day.", o: ["brush", "is brushing", "brushes", "brushed"], a: 2 },
+                { q: "She ___ to music in her free time.", o: ["listen", "listens", "is listening", "listened"], a: 1 },
+                { q: "We ___ our grandparents every month.", o: ["visit", "visits", "are visiting", "visited"], a: 0 },
+                { q: "The moon ___ at night.", o: ["appear", "appears", "is appearing", "appeared"], a: 1 },
+                { q: "A baker ___ bread.", o: ["bake", "bakes", "is baking", "baked"], a: 1 },
+                { q: "___ your sister play the guitar?", o: ["Do", "Does", "Is", "Are"], a: 1 },
+                { q: "They ___ speak French.", o: ["not", "doesn't", "don't", "aren't"], a: 2 },
+                { q: "It often ___ here in winter.", o: ["snow", "is snowing", "snows", "snowed"], a: 2 },
+                { q: "A pilot ___ airplanes.", o: ["fly", "flies", "is flying", "flown"], a: 1 },
+                { q: "My dog ___ at strangers.", o: ["bark", "barks", "is barking", "barked"], a: 1 },
+                { q: "We ___ to the cinema on Fridays.", o: ["go", "goes", "are going", "went"], a: 0 },
+                { q: "___ he have any siblings?", o: ["Do", "Does", "Is", "Has"], a: 1 },
+                { q: "The museum ___ at 6 PM.", o: ["close", "is closing", "closes", "closed"], a: 2 },
+                { q: "She ___ her homework after school.", o: ["do", "does", "is doing", "did"], a: 1 },
+                { q: "I ___ like spicy food.", o: ["not", "doesn't", "don't", "am not"], a: 2 },
+                { q: "You ___ very happy today.", o: ["look", "looks", "are looking", "looked"], a: 0 },
+                { q: "The sun ___ us light and heat.", o: ["give", "gives", "is giving", "gave"], a: 1 },
+                { q: "A nurse ___ after patients.", o: ["look", "looks", "is looking", "looked"], a: 1 },
+                { q: "They ___ in a small apartment.", o: ["live", "lives", "are living", "lived"], a: 0 },
+                { q: "He ___ to be a famous actor.", o: ["want", "wants", "is wanting", "wanted"], a: 1 },
+                { q: "The coffee shop ___ at 7 AM.", o: ["open", "is opening", "opens", "opened"], a: 2 },
+                { q: "She ___ her emails every morning.", o: ["check", "checks", "is checking", "checked"], a: 1 },
+                { q: "We ___ a lot of books.", o: ["read", "reads", "are reading", "red"], a: 0 },
+                { q: "It ___ a lot in the rainy season.", o: ["rain", "is raining", "rains", "rained"], a: 2 },
+                { q: "My father ___ in a bank.", o: ["work", "works", "is working", "worked"], a: 1 },
+                { q: "___ they live near the park?", o: ["Are", "Is", "Do", "Does"], a: 2 },
+                { q: "The children ___ in the garden.", o: ["play", "plays", "are playing", "played"], a: 0 }
+            ];
+            
+            const game2Questions = [
+                { q: "A bee (fly) from flower to flower.", a: "flies" },
+                { q: "Sarah (mix) the ingredients for the cake.", a: "mixes" },
+                { q: "The Queen of England (live) in Buckingham Palace.", a: "lives" },
+                { q: "A postman (deliver) letters.", a: "delivers" },
+                { q: "My mom (worry) about me when I'm late.", a: "worries" },
+                { q: "The earth (revolve) around the sun.", a: "revolves" },
+                { q: "He often (watch) movies.", a: "watches" },
+                { q: "She (teach) English at our school.", a: "teaches" },
+                { q: "The bus (arrive) at 10 AM.", a: "arrives" },
+                { q: "An artist (paint) pictures.", a: "paints" },
+                { q: "She (kiss) her son goodnight.", a: "kisses" },
+                { q: "The machine (wash) clothes.", a: "washes" },
+                { q: "He (pass) the ball.", a: "passes" },
+                { q: "A dog (chase) a cat.", a: "chases" },
+                { q: "My dad (watch) the news.", a: "watches" },
+                { q: "The student (guess) the answer.", a: "guesses" },
+                { q: "She (wish) for a new bike.", a: "wishes" },
+                { q: "The magician (vanish) in a puff of smoke.", a: "vanishes" },
+                { q: "He (push) the door open.", a: "pushes" },
+                { q: "The teacher (explain) the lesson.", a: "explains" },
+                { q: "A bird (sing) in the morning.", a: "sings" },
+                { q: "My sister (play) the violin.", a: "plays" },
+                { q: "The sun (shine) brightly.", a: "shines" },
+                { q: "He (run) every day.", a: "runs" },
+                { q: "She (write) a letter.", a: "writes" },
+                { q: "The chef (cook) delicious food.", a: "cooks" },
+                { q: "A baby (sleep) a lot.", a: "sleeps" },
+                { q: "The cat (drink) milk.", a: "drinks" },
+                { q: "My friend (read) many books.", a: "reads" },
+                { q: "The car (need) gas.", a: "needs" },
+                { q: "She (help) her mother.", a: "helps" },
+                { q: "He (know) the answer.", a: "knows" },
+                { q: "The flower (smell) nice.", a: "smells" },
+                { q: "The boy (throw) the ball.", a: "throws" },
+                { q: "The girl (dance) beautifully.", a: "dances" },
+                { q: "The phone (ring) loudly.", a: "rings" },
+                { q: "The student (listen) to the teacher.", a: "listens" },
+                { q: "The man (drive) a car.", a: "drives" },
+                { q: "The woman (wear) a red dress.", a: "wears" },
+                { q: "The wind (blow) strongly.", a: "blows" }
+            ];
+
+            const postTestQuestions = [
+                { q: "My dad ___ the dishes every evening.", o: ["wash", "washing", "washes", "is washing"], a: 2 },
+                { q: "It rarely ___ in this part of the country.", o: ["rain", "rains", "is raining", "don't rain"], a: 1 },
+                { q: "___ your parents know you are here?", o: ["Is", "Are", "Does", "Do"], a: 3 },
+                { q: "A chef is a person who ___ food.", o: ["cook", "cooks", "is cooking", "to cook"], a: 1 },
+                { q: "I ___ understand what you are saying.", o: ["doesn't", "not", "am not", "don't"], a: 3 },
+                { q: "She always ___ her keys.", o: ["lose", "loses", "is losing", "looses"], a: 1 },
+                { q: "Why ___ he always complain?", o: ["do", "is", "does", "are"], a: 2 },
+                { q: "The flight from London ___ at 6:00 AM.", o: ["arrive", "is arriving", "arrives", "arrived"], a: 2 },
+                { q: "My sister is a teacher. She ___ young children.", o: ["teach", "teaches", "taught", "is teaching"], a: 1 },
+                { q: "People in Japan ___ a lot of rice.", o: ["eats", "eat", "are eating", "is eating"], a: 1 }
+            ];
+
+            // --- YOUTUBE API ---
+            window.onYouTubeIframeAPIReady = function() {
+                player = new YT.Player('player', {
+                    height: '100%',
+                    width: '100%',
+                    videoId: 'bYO88ag2T2o',
+                    playerVars: {
+                        'playsinline': 1
+                    }
+                });
+            }
+
+
+            // --- FUNCTIONS ---
+
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            function showSection(sectionId) {
+                currentSection = sectionId;
+                sections.forEach(section => {
+                    if (section.id === sectionId) {
+                        section.classList.remove('hidden');
+                    } else {
+                        section.classList.add('hidden');
+                    }
+                });
+                playBackgroundMusic(sectionId);
+            }
+
+            // --- Section 1: Registration Logic ---
+            initiateBtn.addEventListener('click', async () => {
+                await Tone.start();
+                playClick();
+                playBackgroundMusic('section-1');
+                regModal.classList.remove('hidden', 'opacity-0');
+            });
+
+            regForm.addEventListener('input', () => {
+                const allFilled = [...regInputs].every(input => input.value.trim() !== '');
+                goOperationalBtn.disabled = !allFilled;
+            });
+
+            regForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                playClick();
+                userData.name = document.getElementById('student-name').value;
+                userData.class = document.getElementById('student-class').value;
+                userData.number = document.getElementById('student-number').value;
+                
+                regModal.classList.add('opacity-0');
+                setTimeout(() => regModal.classList.add('hidden'), 300);
+
+                retinaScan.classList.remove('hidden');
+                setTimeout(() => {
+                    retinaScan.classList.add('hidden');
+                    startPreTest();
+                }, 2000);
+            });
+
+            // --- Section 2: Pre-Test Logic ---
+            function startPreTest() {
+                currentQuestionIndex = 0;
+                preTestScore = 0;
+                preTestFeedbackEl.classList.add('hidden');
+                preTestContainer.querySelector('#pre-test-question-container').classList.remove('hidden');
+                showSection('section-2');
+                renderPreTestQuestion();
+            }
+
+            function renderPreTestQuestion() {
+                const questions = preTestQuestions;
+                if (currentQuestionIndex >= questions.length) {
+                    endPreTest();
+                    return;
+                }
+                const q = questions[currentQuestionIndex];
+                preTestQuestionEl.textContent = q.q;
+                preTestOptionsEl.innerHTML = '';
+                q.o.forEach((option, index) => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('w-full', 'p-4', 'rounded-md', 'transition-all', 'duration-200', 'bg-gray-800', 'border-2', 'border-cyan-800', 'hover:bg-cyan-700', 'hover:border-cyan-500');
+                    button.onclick = () => handlePreTestAnswer(index);
+                    preTestOptionsEl.appendChild(button);
+                });
+                const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+                progressText2.textContent = `Analyzing Cognitive Response... (${currentQuestionIndex + 1}/${questions.length})`;
+                progressBar2.style.width = `${progress}%`;
+            }
+
+            function handlePreTestAnswer(selectedIndex) {
+                if (selectedIndex === preTestQuestions[currentQuestionIndex].a) {
+                    playCorrect();
+                    preTestScore++;
+                } else {
+                    playIncorrect();
+                }
+                currentQuestionIndex++;
+                renderPreTestQuestion();
+            }
+
+            function endPreTest() {
+                preTestContainer.querySelector('#pre-test-question-container').classList.add('hidden');
+                preTestFeedbackEl.classList.remove('hidden');
+            }
+            
+            awaitingBriefingBtn.addEventListener('click', () => {
+                playClick();
+                showSection('section-3');
+                startLessonTimer();
+            });
+
+            // --- Section 3: Lesson Logic ---
+            function startLessonTimer() {
+                let timeLeft = 15;
+                acceptMissionBtn.disabled = true;
+                acceptMissionBtn.innerHTML = `ปลดล็อกใน <span id="mission-timer">${timeLeft}</span>s`;
+
+                const timerInterval = setInterval(() => {
+                    timeLeft--;
+                    const timerEl = document.getElementById('mission-timer');
+                    if (timerEl) timerEl.textContent = timeLeft;
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        acceptMissionBtn.disabled = false;
+                        acceptMissionBtn.innerHTML = "ACCEPT MISSION PROTOCOL 🎲";
+                        acceptMissionBtn.classList.add('btn-glitch');
+                    }
+                }, 1000);
+            }
+
+            acceptMissionBtn.addEventListener('click', () => {
+                playClick();
+                if (player && typeof player.stopVideo === 'function') {
+                    player.stopVideo();
+                }
+                showSection('section-4-instructions');
+            });
+
+            // --- Section 4: Game 1 Logic (Bomb Defusal) ---
+            startGame1Btn.addEventListener('click', () => {
+                playMissionStart();
+                startGame1();
+            });
+
+            function startGame1() {
+                currentShuffledGame1Questions = shuffleArray([...game1Questions]);
+                currentQuestionIndex = 0;
+                game1Score = 0;
+                game1TimeLeft = 120; // 2 minutes
+                gameResultContainer.classList.add('hidden');
+                gameContainer.classList.remove('hidden');
+                updateGame1Score();
+                showSection('section-4');
+                renderGame1Question();
+                startCountdown();
+            }
+
+            function startCountdown() {
+                clearInterval(game1CountdownInterval);
+                game1CountdownInterval = setInterval(() => {
+                    if (game1TimeLeft > 0) {
+                        game1TimeLeft--;
+                        const minutes = Math.floor(game1TimeLeft / 60).toString().padStart(2, '0');
+                        const seconds = (game1TimeLeft % 60).toString().padStart(2, '0');
+                        countdownTimerEl.textContent = `${minutes}:${seconds}`;
+                    } else {
+                        bombDetonated();
+                    }
+                }, 1000);
+            }
+
+            function renderGame1Question() {
+                if (currentQuestionIndex >= currentShuffledGame1Questions.length) {
+                    if (game1Score >= 10) {
+                        defuseSuccess();
+                    } else {
+                        bombDetonated();
+                    }
+                    return;
+                }
+                const q = currentShuffledGame1Questions[currentQuestionIndex];
+                gameQuestionEl.textContent = q.q;
+                gameOptionsEl.innerHTML = '';
+                q.o.forEach((option, index) => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('w-full', 'p-4', 'rounded-md', 'transition-all', 'duration-200', 'bg-gray-700', 'border-2', 'border-cyan-800', 'hover:bg-cyan-600', 'hover:border-cyan-400');
+                    button.onclick = () => handleGame1Answer(index);
+                    gameOptionsEl.appendChild(button);
+                });
+            }
+
+            function handleGame1Answer(selectedIndex) {
+                const isCorrect = selectedIndex === currentShuffledGame1Questions[currentQuestionIndex].a;
+                
+                gameOptionsEl.querySelectorAll('button').forEach(btn => btn.disabled = true);
+
+                if (isCorrect) {
+                    playCorrect();
+                    game1Score++;
+                    gameOptionsEl.children[selectedIndex].classList.add('bg-green-500', 'border-green-400');
+                    if (game1Score >= 10) {
+                        defuseSuccess();
+                        return;
+                    }
+                } else {
+                    playIncorrect();
+                    game1TimeLeft -= 10;
+                    screenFlashOverlay.classList.add('screen-flash-red');
+                    setTimeout(() => screenFlashOverlay.classList.remove('screen-flash-red'), 500);
+                    gameOptionsEl.children[selectedIndex].classList.add('bg-red-500', 'border-red-400');
+                    gameOptionsEl.children[currentShuffledGame1Questions[currentQuestionIndex].a].classList.add('bg-green-500', 'border-green-400');
+                }
+                
+                updateGame1Score();
+                currentQuestionIndex++;
+                
+                setTimeout(() => {
+                    renderGame1Question();
+                }, 1200);
+            }
+
+            function updateGame1Score() {
+                gameScoreText.textContent = `Components Defused: ${game1Score}/10`;
+            }
+
+            function endGame1Cleanup() {
+                clearInterval(game1CountdownInterval);
+                gameContainer.classList.add('hidden');
+                gameResultContainer.classList.remove('hidden');
+            }
+
+            function bombDetonated() {
+                endGame1Cleanup();
+                playExplosion();
+                explosionEffect.classList.remove('hidden');
+                setTimeout(() => {
+                    explosionEffect.classList.add('hidden');
+                    gameResultMessage.textContent = "BOMB DETONATED";
+                    gameResultMessage.classList.add('text-red-500');
+                    gameResultMessage.classList.remove('text-green-400');
+                    gameNextStepBtn.textContent = "REVIEW PROTOCOL";
+                    gameNextStepBtn.onclick = () => {
+                        playClick();
+                        showSection('section-3');
+                        startLessonTimer();
+                    };
+                }, 500);
+            }
+
+            function defuseSuccess() {
+                endGame1Cleanup();
+                playMissionStart();
+                gameResultMessage.innerHTML = `
+                    <p class="text-green-400">LOGIC BOMB DEFUSED!</p>
+                    <p class="text-lg text-gray-300 mt-2">The bomb was a distraction! Infiltrate their server now!</p>
+                `;
+                gameNextStepBtn.textContent = "PROCEED TO NEXT MISSION";
+                gameNextStepBtn.onclick = () => {
+                    playClick();
+                    showSection('section-4b-instructions');
+                }
+            }
+            
+            // --- Section 4b: Game 2 Logic (Data Extraction) ---
+            startGame2Btn.addEventListener('click', () => {
+                playMissionStart();
+                startGame2();
+            });
+
+            function startGame2() {
+                currentShuffledGame2Questions = shuffleArray([...game2Questions]);
+                currentQuestionIndex = 0;
+                game2Score = 0;
+                game2TimeLeft = 90; // 1.5 minutes
+                game2ResultContainer.classList.add('hidden');
+                game2Container.classList.remove('hidden');
+                updateGame2Score();
+                showSection('section-4b');
+                renderGame2Question();
+                startGame2Countdown();
+            }
+
+            function startGame2Countdown() {
+                clearInterval(game2CountdownInterval);
+                game2CountdownInterval = setInterval(() => {
+                    if (game2TimeLeft > 0) {
+                        game2TimeLeft--;
+                        const minutes = Math.floor(game2TimeLeft / 60).toString().padStart(2, '0');
+                        const seconds = (game2TimeLeft % 60).toString().padStart(2, '0');
+                        game2CountdownTimerEl.textContent = `${minutes}:${seconds}`;
+                    } else {
+                        game2TimeUp();
+                    }
+                }, 1000);
+            }
+            
+            function renderGame2Question() {
+                 if (currentQuestionIndex >= currentShuffledGame2Questions.length) {
+                    game2TimeUp(); // Not enough correct answers even if all questions are answered
+                    return;
+                }
+                const q = currentShuffledGame2Questions[currentQuestionIndex];
+                game2QuestionEl.textContent = q.q;
+                game2AnswerInput.value = '';
+                game2FeedbackText.textContent = '';
+                game2AnswerInput.focus();
+            }
+            
+            function handleGame2Answer() {
+                if (submitDataBtn.disabled) return;
+                const userAnswer = game2AnswerInput.value.trim().toLowerCase();
+                const correctAnswer = currentShuffledGame2Questions[currentQuestionIndex].a.toLowerCase();
+                
+                if (userAnswer === correctAnswer) {
+                    playCorrect();
+                    game2Score++;
+                    game2TimeLeft += 5; // Bonus time
+                    game2FeedbackText.textContent = ">> DATA PACKET EXTRACTED";
+                    game2FeedbackText.classList.add('text-green-400');
+                    game2FeedbackText.classList.remove('text-red-400');
+                    if (game2Score >= 5) {
+                        extractionSuccess();
+                        return;
+                    }
+                } else {
+                    playIncorrect();
+                    game2TimeLeft -= 10; // Penalty
+                    screenFlashOverlay.classList.add('screen-flash-red');
+                    setTimeout(() => screenFlashOverlay.classList.remove('screen-flash-red'), 500);
+                    game2FeedbackText.textContent = ">> FIREWALL ALERT! DATA CORRUPTED";
+                    game2FeedbackText.classList.add('text-red-400');
+                    game2FeedbackText.classList.remove('text-green-400');
+                }
+                
+                updateGame2Score();
+                currentQuestionIndex++;
+                
+                submitDataBtn.disabled = true;
+                setTimeout(() => {
+                    renderGame2Question();
+                    submitDataBtn.disabled = false;
+                }, 1200);
+            }
+
+            function updateGame2Score() {
+                game2ScoreText.textContent = `Data Extracted: ${game2Score}/5`;
+            }
+
+            submitDataBtn.addEventListener('click', () => {
+                playClick();
+                handleGame2Answer();
+            });
+            game2AnswerInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    playClick();
+                    handleGame2Answer();
+                }
+            });
+
+            function endGame2Cleanup() {
+                clearInterval(game2CountdownInterval);
+                game2Container.classList.add('hidden');
+                game2ResultContainer.classList.remove('hidden');
+            }
+
+            function game2TimeUp() {
+                endGame2Cleanup();
+                playHacked();
+                hackedEffect.classList.remove('hidden');
+                let drops = 0;
+                const interval = setInterval(() => {
+                    const el = document.createElement('div');
+                    el.classList.add('hacked-text');
+                    el.textContent = "SYSTEM BREACH // ACCESS DENIED //";
+                    el.style.left = `${Math.random() * 100}vw`;
+                    hackedEffect.appendChild(el);
+                    drops++;
+                    if (drops > 100) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            hackedEffect.classList.add('hidden');
+                            hackedEffect.innerHTML = '';
+                             game2ResultMessage.textContent = "SYSTEM BREACHED";
+                            game2ResultMessage.classList.add('text-red-500');
+                            game2ResultMessage.classList.remove('text-green-400');
+                            game2NextStepBtn.textContent = "REVIEW PROTOCOL";
+                            game2NextStepBtn.onclick = () => {
+                                playClick();
+                                showSection('section-3');
+                                startLessonTimer();
+                            };
+                        }, 1000);
+                    }
+                }, 50);
+            }
+
+            function extractionSuccess() {
+                endGame2Cleanup();
+                playMissionStart();
+                game2ResultMessage.textContent = "DATA EXTRACTION COMPLETE!";
+                game2ResultMessage.classList.add('text-green-400');
+                game2ResultMessage.classList.remove('text-red-500');
+                game2NextStepBtn.textContent = "FILE MISSION REPORT";
+                game2NextStepBtn.onclick = () => {
+                    playClick();
+                    startPostTest();
+                }
+            }
+
+            // --- Section 5: Post-Test Logic ---
+            function startPostTest() {
+                currentQuestionIndex = 0;
+                postTestScore = 0;
+                postTestFeedbackEl.classList.add('hidden');
+                postTestContainer.querySelector('#post-test-question-container').classList.remove('hidden');
+                showSection('section-5');
+                renderPostTestQuestion();
+            }
+
+            function renderPostTestQuestion() {
+                const questions = postTestQuestions;
+                if (currentQuestionIndex >= questions.length) {
+                    endPostTest();
+                    return;
+                }
+                const q = questions[currentQuestionIndex];
+                postTestQuestionEl.textContent = q.q;
+                postTestOptionsEl.innerHTML = '';
+                q.o.forEach((option, index) => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('w-full', 'p-4', 'rounded-md', 'transition-all', 'duration-200', 'bg-gray-800', 'border-2', 'border-cyan-800', 'hover:bg-cyan-700', 'hover:border-cyan-500');
+                    button.onclick = () => handlePostTestAnswer(index);
+                    postTestOptionsEl.appendChild(button);
+                });
+                const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+                progressText5.textContent = `Compiling Report... (${currentQuestionIndex + 1}/${questions.length})`;
+                progressBar5.style.width = `${progress}%`;
+            }
+
+            function handlePostTestAnswer(selectedIndex) {
+                if (selectedIndex === postTestQuestions[currentQuestionIndex].a) {
+                    playCorrect();
+                    postTestScore++;
+                } else {
+                    playIncorrect();
+                }
+                currentQuestionIndex++;
+                renderPostTestQuestion();
+            }
+
+            function endPostTest() {
+                postTestContainer.querySelector('#post-test-question-container').classList.add('hidden');
+                postTestFeedbackEl.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    showLeaderboard();
+                }, 2000);
+            }
+
+            // --- Section 6: Leaderboard Logic ---
+            function saveLeaderboardLocally(finalScore) {
+                const leaderboard = JSON.parse(localStorage.getItem('wordkeepersLeaderboard')) || [];
+                const existingUserIndex = leaderboard.findIndex(entry => entry.number === userData.number && entry.class === userData.class);
+                if (existingUserIndex > -1) {
+                    if (finalScore > leaderboard[existingUserIndex].score) {
+                        leaderboard[existingUserIndex].score = finalScore;
+                    }
+                } else {
+                    leaderboard.push({ ...userData, score: finalScore });
+                }
+                leaderboard.sort((a, b) => b.score - a.score);
+                localStorage.setItem('wordkeepersLeaderboard', JSON.stringify(leaderboard));
+                return leaderboard;
+            }
+
+            function renderLeaderboard(list) {
+                leaderboardBody.innerHTML = '';
+                list.forEach((entry, index) => {
+                    const isCurrentUser = String(entry.number) === String(userData.number) && String(entry.class) === String(userData.class);
+                    const row = document.createElement('tr');
+                    row.classList.add('border-b', 'border-gray-700');
+                    if (isCurrentUser) {
+                        row.classList.add('bg-cyan-900', 'bg-opacity-50');
+                    }
+
+                    const cells = [index + 1, `${entry.name}${isCurrentUser ? ' 🌟' : ''}`, entry.class, entry.number, `${entry.score}/${postTestQuestions.length}`];
+                    cells.forEach((value, i) => {
+                        const td = document.createElement('td');
+                        td.classList.add('p-3');
+                        if (i === 4) td.classList.add('font-bold', 'text-cyan-400');
+                        td.textContent = value;
+                        row.appendChild(td);
+                    });
+                    leaderboardBody.appendChild(row);
+                });
+            }
+
+            async function showLeaderboard() {
+                const finalScore = postTestScore;
+                const localLeaderboard = saveLeaderboardLocally(finalScore);
+
+                let remoteLeaderboard = null;
+                try {
+                    await fetch(LEADERBOARD_API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ name: userData.name, class: userData.class, number: userData.number, score: finalScore })
+                    });
+                    const res = await fetch(LEADERBOARD_API_URL);
+                    const remoteData = await res.json();
+                    remoteLeaderboard = remoteData.sort((a, b) => b.score - a.score);
+                } catch (err) {
+                    console.error('Leaderboard sync with Google Sheet failed, showing local scores instead.', err);
+                }
+
+                renderLeaderboard(remoteLeaderboard || localLeaderboard);
+                showSection('section-6');
+            }
+            
+            restartProtocolBtn.addEventListener('click', () => {
+                playClick();
+                userData = { name: '', class: '', number: '' };
+                preTestScore = 0; game1Score = 0; game2Score = 0; postTestScore = 0;
+                currentQuestionIndex = 0;
+                document.getElementById('registration-form').reset();
+                goOperationalBtn.disabled = true;
+                showSection('section-1');
+            });
+            
+            goDarkBtn.addEventListener('click', () => {
+                playClick();
+                document.body.innerHTML = `<div class="flex items-center justify-center min-h-screen w-full">
+                    <h1 class="text-4xl font-orbitron text-red-500">CONNECTION TERMINATED</h1>
+                </div>`;
+                background.style.display = 'none';
+            });
+
+            function createMatrixText() {
+                const el = document.createElement('div');
+                el.classList.add('matrix-text');
+                el.textContent = '0110100101101110011101000110010101101100';
+                el.style.left = `${Math.random() * 100}vw`;
+                el.style.animationDuration = `${Math.random() * 10 + 5}s`;
+                el.style.animationDelay = `${Math.random() * 5}s`;
+                background.appendChild(el);
+                
+                setTimeout(() => el.remove(), 15000);
+            }
+            setInterval(createMatrixText, 200);
+
+            showSection('section-1');
+        });
+    </script>
+</body>
+</html>
