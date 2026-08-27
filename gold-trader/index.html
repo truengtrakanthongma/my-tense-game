@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gold Signal Lab — วิเคราะห์ทองคำเรียลไทม์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b1020'/%3E%3Cpath d='M5 22l6-9 5 6 4-6 7 9z' fill='%23f0b429'/%3E%3Ccircle cx='24' cy='8' r='3' fill='%23f0b429'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="dot" id="statusDot"></span>
+    <div>
+      <h1>Gold Signal Lab</h1>
+      <p id="statusText">กำลังเริ่มระบบ…</p>
+    </div>
+  </div>
+
+  <div class="price-block">
+    <div class="price-main">
+      <span id="livePrice">—</span>
+      <span class="unit">USD / ออนซ์</span>
+    </div>
+    <div class="price-sub">
+      <span id="priceChange" class="chg">—</span>
+      <span id="thbPrice" class="thb">—</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label>แหล่งข้อมูล
+      <select id="sourceSel">
+        <option value="binance">Binance PAXG (ทองคำ 24 ชม. ฟรี)</option>
+        <option value="twelvedata">Twelve Data XAU/USD (ต้องมี API key)</option>
+        <option value="demo">โหมดจำลอง (ไม่มีเน็ตก็ใช้ได้)</option>
+      </select>
+    </label>
+    <label>สัญลักษณ์
+      <select id="symbolSel">
+        <option value="PAXGUSDT">PAXG/USDT</option>
+        <option value="XAUTUSDT">XAUT/USDT</option>
+      </select>
+    </label>
+    <button id="reloadBtn" class="btn">↻ โหลดใหม่</button>
+  </div>
+</header>
+
+<main>
+  <section class="chart-area">
+    <div class="chart-toolbar">
+      <div class="tf-group" id="tfGroup"></div>
+      <div class="spacer"></div>
+      <label class="chk"><input type="checkbox" id="togBB" checked> Bollinger</label>
+      <label class="chk"><input type="checkbox" id="togLevels" checked> แนวรับ-ต้าน</label>
+      <label class="chk"><input type="checkbox" id="togRSI" checked> RSI</label>
+      <label class="chk"><input type="checkbox" id="togMACD" checked> MACD</label>
+      <label class="chk"><input type="checkbox" id="togMarkers" checked> จุดสัญญาณย้อนหลัง</label>
+      <button id="resetZoom" class="btn small">⟲ ล่าสุด</button>
+    </div>
+    <div class="canvas-wrap"><canvas id="chart"></canvas></div>
+    <div class="legend">
+      <span><i style="background:#facc15"></i>EMA20</span>
+      <span><i style="background:#38bdf8"></i>EMA50</span>
+      <span><i style="background:#f472b6"></i>EMA200</span>
+      <span><i style="background:#a78bfa"></i>VWAP</span>
+      <span class="hint">เลื่อนล้อ = ซูม · ลาก = เลื่อนกราฟ</span>
+    </div>
+  </section>
+
+  <aside class="sidebar">
+    <!-- การ์ดสัญญาณหลัก -->
+    <div class="card signal-card" id="signalCard">
+      <div class="signal-head">
+        <div class="action" id="actionText">รอสัญญาณ</div>
+        <div class="grade" id="gradeText">—</div>
+      </div>
+      <div class="gauge">
+        <div class="gauge-bar"><div class="gauge-fill" id="gaugeFill"></div><div class="gauge-zero"></div></div>
+        <div class="gauge-labels"><span>ขาย -100</span><span id="scoreText">0</span><span>+100 ซื้อ</span></div>
+      </div>
+      <div class="prob-row">
+        <div class="prob">
+          <span class="prob-label">โอกาสถึงเป้าแรก (1R) ก่อนโดน SL</span>
+          <span class="prob-value" id="probValue">—</span>
+        </div>
+        <div class="prob-note" id="probNote">ยังไม่ได้ทดสอบย้อนหลัง</div>
+      </div>
+      <div class="candle-state" id="candleState"></div>
+    </div>
+
+    <!-- แผนเทรด -->
+    <div class="card">
+      <h2>แผนเข้า–ออก</h2>
+      <div id="planBox" class="plan-empty">ยังไม่มีแผน — รอคะแนนถึงเกณฑ์</div>
+      <div class="risk-inputs">
+        <label>ทุน (USD)<input type="number" id="accountInput" value="1000" min="10" step="10"></label>
+        <label>ความเสี่ยง/ไม้ (%)<input type="number" id="riskInput" value="1" min="0.1" max="10" step="0.1"></label>
+      </div>
+      <div id="sizeBox" class="size-box"></div>
+    </div>
+
+    <!-- เหตุผล -->
+    <div class="card">
+      <h2>เหตุผลประกอบ <small id="reasonCount"></small></h2>
+      <div class="reason-tabs">
+        <button class="rtab active" data-r="pro">สนับสนุน</button>
+        <button class="rtab" data-r="con">ค้าน</button>
+        <button class="rtab" data-r="ctx">บริบท</button>
+      </div>
+      <div id="reasonList" class="reason-list"></div>
+    </div>
+
+    <!-- หลายกรอบเวลา -->
+    <div class="card">
+      <h2>หลายกรอบเวลา (Multi-Timeframe)</h2>
+      <div id="mtfBox" class="mtf-box"></div>
+      <p class="tiny">กรอบใหญ่บอก "กระแสน้ำ" กรอบเล็กบอก "จังหวะกระโดดลงน้ำ" — เทรดสวนกรอบใหญ่คืออัตราชนะที่ต่ำลง</p>
+    </div>
+  </aside>
+</main>
+
+<section class="tabs-section">
+  <div class="tabbar">
+    <button class="tab active" data-tab="backtest">📊 ผลทดสอบย้อนหลัง</button>
+    <button class="tab" data-tab="alerts">🔔 แจ้งเตือน</button>
+    <button class="tab" data-tab="context">🌐 บริบทตลาด &amp; ข่าว</button>
+    <button class="tab" data-tab="settings">⚙️ ตั้งค่า</button>
+    <button class="tab" data-tab="howto">📘 วิธีใช้ &amp; ข้อจำกัด</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-backtest">
+    <div class="bt-controls">
+      <button id="runBt" class="btn primary">▶ ทดสอบกฎกับข้อมูลจริงย้อนหลัง</button>
+      <label>คะแนนขั้นต่ำ <input type="number" id="thresholdInput" value="35" min="10" max="90" step="1"></label>
+      <label>ถือได้สูงสุด (แท่ง) <input type="number" id="maxHoldInput" value="60" min="5" max="300" step="5"></label>
+      <label>สเปรด (USD) <input type="number" id="spreadInput" value="0.30" min="0" max="3" step="0.05"></label>
+      <span id="btStatus" class="tiny"></span>
+    </div>
+    <div id="btSummary" class="bt-summary"></div>
+    <div class="bt-grid">
+      <div><h3>ความน่าจะเป็นตามระดับคะแนน</h3><div id="btBands"></div></div>
+      <div><h3>อัตราชนะตามช่วงเวลา (เวลาไทย)</h3><div id="btSessions"></div></div>
+      <div><h3>เส้นทุน (หน่วย R)</h3><canvas id="equityCanvas" height="150"></canvas></div>
+    </div>
+    <div id="btTrades"></div>
+  </div>
+
+  <div class="tab-panel" id="tab-alerts">
+    <div class="alert-config">
+      <button id="enableNotif" class="btn">เปิดแจ้งเตือนหน้าจอ</button>
+      <label class="chk"><input type="checkbox" id="togSound" checked> เสียงเตือน</label>
+      <label class="chk"><input type="checkbox" id="togSpeak"> อ่านออกเสียงไทย</label>
+      <label class="chk"><input type="checkbox" id="togClosedOnly" checked> ยืนยันเมื่อแท่งปิดเท่านั้น</label>
+      <label>เว้นระยะเตือน (นาที) <input type="number" id="cooldownInput" value="5" min="0" max="120"></label>
+      <label class="wide">Webhook (Discord) <input type="text" id="webhookInput" placeholder="https://discord.com/api/webhooks/..."></label>
+    </div>
+    <div class="rule-builder">
+      <h3>กฎเตือนส่วนตัว</h3>
+      <div class="rule-form">
+        <select id="ruleType">
+          <option value="price_above">ราคาทะลุขึ้นเหนือ</option>
+          <option value="price_below">ราคาหลุดลงต่ำกว่า</option>
+          <option value="rsi_above">RSI สูงกว่า</option>
+          <option value="rsi_below">RSI ต่ำกว่า</option>
+        </select>
+        <input type="number" id="ruleValue" step="0.01" placeholder="ค่า">
+        <label class="chk"><input type="checkbox" id="ruleOnce" checked> เตือนครั้งเดียว</label>
+        <button id="addRule" class="btn small">+ เพิ่มกฎ</button>
+      </div>
+      <div id="ruleList"></div>
+    </div>
+    <div class="alert-log">
+      <h3>ประวัติการแจ้งเตือน <button id="clearLog" class="btn tiny-btn">ล้าง</button></h3>
+      <div id="logList"></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-context">
+    <div class="ctx-grid">
+      <div class="card"><h2>ช่วงตลาดตอนนี้</h2><div id="sessionBox"></div></div>
+      <div class="card"><h2>ปฏิทินข่าวเสี่ยง</h2>
+        <div id="newsBox"></div>
+        <div class="news-form">
+          <input type="text" id="evTitle" placeholder="ชื่อข่าว เช่น US CPI">
+          <input type="datetime-local" id="evTime">
+          <button id="addEvent" class="btn small">+ เพิ่ม</button>
+        </div>
+        <p class="tiny">NFP (ศุกร์แรกของเดือน) คำนวณอัตโนมัติ ส่วน CPI/FOMC ที่วันเวลาไม่ตายตัว ให้กรอกเองจากปฏิทินเศรษฐกิจที่คุณใช้</p>
+      </div>
+      <div class="card"><h2>สภาพตลาด</h2><div id="regimeBox"></div></div>
+      <div class="card"><h2>สถิติราคาช่วงที่โหลดมา</h2><div id="statsBox"></div></div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-settings">
+    <div class="settings-grid">
+      <div class="card">
+        <h2>เกณฑ์สัญญาณ</h2>
+        <label>คะแนนขั้นต่ำที่ถือว่าเป็นสัญญาณ <input type="number" id="setThreshold" value="35" min="10" max="90"></label>
+        <label>ตัวคูณ ATR สำหรับ Stop Loss <input type="number" id="setSlAtr" value="1.5" min="0.5" max="5" step="0.1"></label>
+        <label>ADX ขั้นต่ำที่ถือว่ามีเทรนด์ <input type="number" id="setAdx" value="22" min="10" max="40"></label>
+        <label>กรอบเวลาใหญ่ที่ 1 <select id="setHtf1"></select></label>
+        <label>กรอบเวลาใหญ่ที่ 2 <select id="setHtf2"></select></label>
+      </div>
+      <div class="card">
+        <h2>ตัวกรองความปลอดภัย</h2>
+        <label class="chk"><input type="checkbox" id="setNewsFilter" checked> ระงับสัญญาณช่วง ±30 นาทีรอบข่าวแรง</label>
+        <label class="chk"><input type="checkbox" id="setVolFilter" checked> ระงับเมื่อผันผวนต่ำ/สูงผิดปกติ</label>
+        <label class="chk"><input type="checkbox" id="setSessionFilter"> เตือนเมื่ออยู่นอกช่วงตลาดหลัก</label>
+        <label>อัตราแลกเปลี่ยน USD/THB <input type="number" id="setUsdThb" value="36.5" step="0.05"></label>
+        <label>API key (Twelve Data) <input type="password" id="setApiKey" placeholder="ไม่บังคับ"></label>
+      </div>
+      <div class="card">
+        <h2>น้ำหนักปัจจัย</h2>
+        <p class="tiny">คะแนนรวม = Σ (น้ำหนัก × ความแรง × ทิศทาง) ÷ น้ำหนักรวม × 100</p>
+        <div id="weightBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="tab-howto">
+    <div class="howto">
+      <h2>ระบบนี้ทำงานอย่างไร</h2>
+      <ol>
+        <li><b>ดึงราคาเรียลไทม์</b> — ค่าเริ่มต้นใช้ PAXG/USDT บน Binance ผ่าน WebSocket (โทเคนหนุนด้วยทองคำจริง 1 เหรียญ = 1 ทรอยออนซ์ เก็บในตู้นิรภัยลอนดอน) ราคาจึงวิ่งเกาะ XAU/USD และมีข้อมูล 24 ชม. ไม่ต้องใช้ API key ถ้าต้องการ XAU/USD ของจริง ให้ใส่ API key ของ Twelve Data ในแท็บตั้งค่า</li>
+        <li><b>คำนวณตัวชี้วัด</b> — EMA20/50/200, RSI, MACD, Bollinger, ATR, ADX/DI, Stochastic, OBV, VWAP, swing pivot, แนวรับ-แนวต้านจากจุดกลับตัวจริง และรูปแบบแท่งเทียน</li>
+        <li><b>ให้แต่ละปัจจัยโหวต</b> — ทุกปัจจัยให้ทิศทาง (+ซื้อ/−ขาย) และความแรง 0–1 พร้อมเหตุผลภาษาไทย รวมกันเป็นคะแนน −100 ถึง +100</li>
+        <li><b>ตรวจสอบข้ามกรอบเวลา</b> — ถ้ากรอบเล็กสวนกรอบใหญ่ คะแนนจะถูกตัดลง 40%</li>
+        <li><b>แปลงเป็นแผนเทรด</b> — SL วางจาก ATR และ swing ล่าสุด (กว้างพอไม่ให้ noise เขี่ยออก) เป้าหมายคิดเป็น R และปรับให้ไม่ชนแนวต้าน/แนวรับใหญ่</li>
+        <li><b>วัดความน่าจะเป็นจากสถิติจริง</b> — กดปุ่มทดสอบย้อนหลัง ระบบจะเดินกฎเดียวกันนี้ทุกแท่งในอดีต แล้วนับว่า "แตะ 1R ก่อนโดน SL" กี่ครั้ง ตัวเลข % ที่แสดงคือสถิติจริงของกฎชุดนี้ ไม่ใช่ตัวเลขที่ตั้งขึ้นมาลอย ๆ</li>
+      </ol>
+
+      <h2>ข้อจำกัดที่ต้องรู้ก่อนใช้เงินจริง</h2>
+      <ul class="warn-list">
+        <li>Backtest ใช้ข้อมูลระดับแท่งเทียน ไม่ใช่ tick — ถ้าแท่งเดียวแตะทั้ง SL และ TP ระบบนับเป็น "แพ้" เสมอ (อนุรักษ์นิยม แต่ก็ยังไม่เท่าการเทรดจริง)</li>
+        <li>ไม่ได้รวมค่า swap ข้ามคืน ค่าคอมมิชชัน หรือการที่สเปรดถ่างตอนข่าว — ของจริงต้นทุนสูงกว่านี้</li>
+        <li>ตัวเลขอัตราชนะมาจากข้อมูลเท่าที่โหลดมา (ไม่กี่ร้อยแท่ง) ตลาดเปลี่ยนพฤติกรรมได้ อดีตไม่รับประกันอนาคต</li>
+        <li>PAXG ≠ XAU/USD เป๊ะ ๆ มีส่วนต่างพรีเมียม/ดิสเคานต์ได้ 0.1–1% และช่วงตลาด spot ปิด ราคาจะเคลื่อนตาม flow คริปโต</li>
+        <li>ระบบนี้เป็นเครื่องมือช่วยตัดสินใจและให้ข้อมูลประกอบ ไม่ใช่คำแนะนำการลงทุน การเทรดทองมีเลเวอเรจสูงและขาดทุนเกินเงินต้นได้</li>
+      </ul>
+
+      <h2>วิธีใช้ให้ได้ผลที่สุด</h2>
+      <ol>
+        <li>เลือกกรอบเวลาที่ตรงกับสไตล์ตัวเอง (สแกล์ป 5m · เดย์เทรด 15m–1h · สวิง 4h–1d)</li>
+        <li>กด "ทดสอบกฎกับข้อมูลจริงย้อนหลัง" ก่อนเสมอ ดูว่าคะแนนขั้นต่ำระดับไหนให้อัตราชนะและค่าคาดหวัง (Expectancy) เป็นบวก แล้วค่อยตั้งเกณฑ์ตามนั้น</li>
+        <li>ดูตาราง "อัตราชนะตามช่วงเวลา" เพื่อรู้ว่าควรเทรดชั่วโมงไหน — นี่คือส่วน "จังหวะ" ที่คนส่วนใหญ่มองข้าม</li>
+        <li>เข้าเฉพาะไม้ที่คะแนนสูงและกรอบเวลาไปทางเดียวกัน อย่าไล่ราคาเมื่อ RSI ร้อนจัด</li>
+        <li>ยึดขนาดไม้ตามช่อง "ความเสี่ยง/ไม้" เสมอ — ระบบคำนวณ lot ให้แล้วจากระยะ SL จริง</li>
+        <li>เมื่อกำไรถึง 1R ให้ปิดครึ่งและเลื่อน SL มาที่ทุน (นี่คือสมมติฐานเดียวกับที่ backtest ใช้ ตัวเลขจึงตรงกับพฤติกรรมที่แนะนำ)</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<div id="toastWrap" class="toast-wrap"></div>
+
+<footer>
+  <p>⚠️ เครื่องมือให้ข้อมูลเพื่อการศึกษา ไม่ใช่คำแนะนำการลงทุน · ราคาจากผู้ให้บริการภายนอกอาจล่าช้าหรือคลาดเคลื่อน · ผู้ใช้รับความเสี่ยงเองทั้งหมด</p>
+</footer>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
