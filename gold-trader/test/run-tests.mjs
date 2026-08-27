@@ -245,7 +245,13 @@ section('6) ข้อมูลสดและเหตุการณ์ "แท
 
   const events = [];
   feed.start((k) => events.push(k), () => {});
-  await new Promise((r) => setTimeout(r, 2600));
+  // รอจน "แท่งปิด" เกิดขึ้นจริง แทนการนอนรอเวลาตายตัว
+  // เพราะจังหวะ tick (900ms) กับความยาวกรอบเวลาไม่ได้หารลงตัวกัน
+  // บางรอบ tick สองครั้งติดจึงตกอยู่ในกรอบเดียวกันและยังไม่มีการข้ามกรอบ
+  const deadline = Date.now() + 8000;
+  while (Date.now() < deadline && !events.some((e) => e.closed)) {
+    await new Promise((r) => setTimeout(r, 100));
+  }
   feed.stop();
   TF['1m'].ms = realMs;
   const closes = events.filter((e) => e.closed);
