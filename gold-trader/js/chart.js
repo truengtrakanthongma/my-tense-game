@@ -162,11 +162,10 @@ export class Chart {
         // ป้ายกำกับ: วางชิดขวา และข้ามป้ายที่จะทับกับป้ายก่อนหน้า
         if (drawn.some((yy) => Math.abs(yy - y) < 13)) continue;
         drawn.push(y);
+        // ป้ายแนวรับ/ต้านวางชิดซ้าย ส่วนป้ายแผนเทรด (Entry/SL/TP) อยู่ชิดขวา จะได้ไม่ทับกัน
         g.fillStyle = lv.type === 'support' ? COL.sup : COL.res;
         g.font = '10px system-ui';
-        g.textAlign = 'right';
-        g.fillText(`${lv.type === 'support' ? 'รับ' : 'ต้าน'} ${lv.price.toFixed(2)} · แตะ ${lv.touches} ครั้ง`, W - padR - 6, y - 3);
-        g.textAlign = 'left';
+        g.fillText(`${lv.type === 'support' ? 'รับ' : 'ต้าน'} ${lv.price.toFixed(2)} · แตะ ${lv.touches} ครั้ง`, padL + 5, y - 3);
       }
     }
 
